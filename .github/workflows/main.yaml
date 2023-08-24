@@ -11,7 +11,7 @@ on:
     branches:
       - main
 
-permissions: read-all|write-all
+permissions: write-all
 
 env:
   SEARCH_DIR: ./.github/workflows
