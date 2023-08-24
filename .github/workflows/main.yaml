@@ -58,7 +58,7 @@ jobs:
   release:
     needs: [test]
     if: startsWith(github.ref, 'refs/heads/main')
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
