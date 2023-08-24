@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - feature/*
+      - release/*
+      - main
+  pull_request:
+    branches:
+      - main
+env:
+  SEARCH_DIR: ./.github/workflows
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Check act and yq version
+        run: |
+          act --version
+          yq --version
+      - name: Basic yaml linting
+        run: |
+          for file in "$SEARCH_DIR"/*
+          do
+            yq -M -I 2 $file
+          done
+
+  test:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github workflow list
+        run: act workflow_call -l
+      - name: Github workflow graph
+        run: act workflow_call -g
+      - name: Github action linting and dry run
+        run: |
+          for file in "$SEARCH_DIR"/*
+          do
+            # act input does not support run-on field as it needs to be set before doing dry run
+            # act does not support self host therefore use ubuntu-latest instead for the dry run
+            yq e -i '.jobs.*.runs-on = "ubuntu-latest"' $file
+            act workflow_call -n -W $file
+          done
+
+  release:
+    needs: [test]
+    if: startsWith(github.ref, 'refs/heads/main')
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: paulhatch/semantic-version@v4.0.2
+        id: tag
+        with:
+          # tag prefix
+          tag_prefix: "v"
+          major_pattern: "(MAJOR)"
+          minor_pattern: "(MINOR)"
+          format: "${major}.${minor}.${patch}"
+          bump_each_commit: false
+          short_tags: false
+      - name: Create Release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ steps.tag.outputs.version_tag }}
+          release_name: Release ${{ steps.tag.outputs.version_tag }}
+          body: |
+            ${{ github.event.head_commit.message }}
+            History: ${{ github.event.after }}g
+          draft: true
+          prerelease: false
