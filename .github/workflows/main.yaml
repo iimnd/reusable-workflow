@@ -36,6 +36,9 @@ jobs:
     needs: [lint]
     runs-on: ubuntu-latest
     steps:
+      - uses: actionsflow/setup-act@v1
+        with:
+          version: '0.2.14'
       - name: Github workflow list
         run: act workflow_call -l
       - name: Github workflow graph
