@@ -26,10 +26,6 @@ on:
         required: true
         default: "3.8"
         type: string
-      django-settings-module:
-        required: false
-        default: ""
-        type: string
       enable-test:
         required: false
         default: true
