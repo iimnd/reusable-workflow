@@ -46,9 +46,15 @@ on:
         required: false
         default: ''
         type: string
+      django-settings-module:
+        required: false
+        default: ''
+        type: string
     secrets:
       checkout-token:
         required: false
+env :
+  DJANGO_SETTINGS_MODULE: ${{ inputs.django-settings-module }}
 jobs:
   execute-lint:
     if: ${{ inputs.enable-lint }}
