@@ -78,7 +78,7 @@ jobs:
           pip install pylint-django
       - name: Analysing the code with pylint
         run: |
-          pylint --load-plugins pylint_django --django-settings-module=${{ inputs.settings_file }}  ${{ inputs.app_source }}
+          pylint --load-plugins pylint_django --django-settings-module=${{ inputs.settings-file }}  ${{ inputs.app-source }}
   execute-tests:
     if: ${{ inputs.enable-test }}
     name: Install requirements and execute tests (${{ inputs.environment }})
