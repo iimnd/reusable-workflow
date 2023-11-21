@@ -46,6 +46,10 @@ on:
         required: false
         default: ''
         type: string
+      project-dir:
+        required: false
+        default: ''
+        type: string
     secrets:
       checkout-token:
         required: false
@@ -106,7 +110,9 @@ jobs:
       - name: Upgrade pip
         run: |
           python -m pip install --upgrade pip
+          pip install pytest-django
       - name: Install requirements
         run: pip install -r requirements.txt
       - name: Execute tests
-        run: python manage.py test
+        working-directory: ${{ inputs.project-dir }}
+        run: pytest
