@@ -1,0 +1,32 @@
+name: environment
+
+on:
+  workflow_call:
+    inputs:
+      runner-name:
+        required: false
+        default: ubuntu-latest
+        type: string
+    outputs:
+      environment:
+        description: "Enviromment of this deployment"
+        value: ${{ jobs.environment.outputs.environment }}
+jobs:
+  environment:
+    name: Setup environment
+    runs-on: ${{ inputs.runner-name }}
+    outputs:
+      environment: ${{ steps.setupEnv.outputs.appEnv }}
+    steps:
+      - name: Set environment
+        id: setupEnv
+        run: |
+          if [[ "${{ github.ref }}" == *"feature"* ]]; then
+            echo "appEnv=dev" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "appEnv=staging" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == *"tags/v"* ]]; then
+            echo "appEnv=prod" >> $GITHUB_OUTPUT
+          else
+            echo "appEnv=dev" >> $GITHUB_OUTPUT
+          fi

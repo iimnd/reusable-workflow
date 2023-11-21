@@ -1,0 +1,65 @@
+name: App Deploy
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        default: dev
+        type: string
+      runner-name:
+        required: false
+        default: ubuntu-latest
+        type: string
+      checkout-repository:
+        required: false
+        default: ''
+        type: string
+      checkout-ref:
+        required: false
+        default: main
+        type: string
+      checkout-path:
+        required: false
+        default: ''
+        type: string
+      django-settings-module:
+        required: true
+        default: ""
+        type: string
+      enable-test:
+        required: false
+        default: true
+        type: boolean
+      enable-docker:
+        required: false
+        default: true
+        type: boolean
+    secrets:
+      checkout-token:
+        required: false
+      docker-username:
+        required: true
+      docker-password:
+        required: true
+      aws-access-key-id:
+        required: false
+      aws-secret-access-key:
+        required: false
+jobs:
+  deploy-app:
+    name: Deploy  (${{ inputs.environment }})
+    runs-on: ${{ inputs.runner-name }}
+    steps:
+      - name: Checkout
+        if: inputs.checkout-repository == ''
+        uses: actions/checkout@v3
+      - name: Checkout ${{ inputs.checkout-repository }}
+        if: inputs.checkout-repository != ''
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.checkout-repository }}
+          ref: ${{ inputs.checkout-ref }}
+          path: ${{ inputs.checkout-path }}
+          token: ${{ secrets.checkout-token }}
+      - name: Docker
+        run: echo "Hello this is deploy"

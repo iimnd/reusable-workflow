@@ -1,0 +1,102 @@
+name: Django Test
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        default: dev
+        type: string
+      runner-name:
+        required: false
+        default: ubuntu-latest
+        type: string
+      checkout-repository:
+        required: false
+        default: ''
+        type: string
+      checkout-ref:
+        required: false
+        default: main
+        type: string
+      checkout-path:
+        required: false
+        default: ''
+        type: string
+      python-version:
+        required: true
+        default: "3.8"
+        type: string
+      django-settings-module:
+        required: false
+        default: ""
+        type: string
+      enable-test:
+        required: false
+        default: true
+        type: boolean
+      enable-lint:
+        required: false
+        default: true
+        type: boolean
+    secrets:
+      checkout-token:
+        required: false
+jobs:
+  execute-lint:
+    if: ${{ inputs.enable-lint }}
+    name: Python Lint (${{ inputs.environment }})
+    runs-on: ${{ inputs.runner-name }}
+    steps:
+      - name: Update
+        run: sudo apt update
+      - name: Checkout
+        if: inputs.checkout-repository == ''
+        uses: actions/checkout@v3
+      - name: Checkout ${{ inputs.checkout-repository }}
+        if: inputs.checkout-repository != ''
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.checkout-repository }}
+          ref: ${{ inputs.checkout-ref }}
+          path: ${{ inputs.checkout-path }}
+          token: ${{ secrets.checkout-token }}
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+      - name: Analysing the code with pylint
+        run: |
+          pylint $(git ls-files '*.py')
+  execute-tests:
+    if: ${{ inputs.enable-test }}
+    name: Install requirements and execute tests (${{ inputs.environment }})
+    runs-on: ${{ inputs.runner-name }}
+    steps:
+      - name: Update
+        run: sudo apt update
+      - name: Checkout
+        if: inputs.checkout-repository == ''
+        uses: actions/checkout@v3
+      - name: Checkout ${{ inputs.checkout-repository }}
+        if: inputs.checkout-repository != ''
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.checkout-repository }}
+          ref: ${{ inputs.checkout-ref }}
+          path: ${{ inputs.checkout-path }}
+          token: ${{ secrets.checkout-token }}
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+      - name: Install requirements
+        run: pip install -r requirements.txt
+      - name: Execute tests
+        run: python manage.py test

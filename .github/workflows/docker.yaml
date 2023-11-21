@@ -1,0 +1,159 @@
+name: Django Docker Build
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        default: dev
+        type: string
+      application:
+        required: true
+        default: my-django
+        type: string
+      runner-name:
+        required: false
+        default: ubuntu-latest
+        type: string
+      checkout-repository:
+        required: false
+        default: ''
+        type: string
+      checkout-ref:
+        required: false
+        default: main
+        type: string
+      checkout-path:
+        required: false
+        default: ''
+        type: string
+      docker-registry:
+        required: false
+        default: my.docker.registry
+        type: string
+      context:
+        required: false
+        default: docker
+        type: string
+      dockerfile:
+        required: false
+        default: Dockerfile
+        type: string
+      tag-prefix:
+        required: false
+        default: ''
+        type: string
+      postfix-image-info:
+        required: false
+        default: 'default'
+        type: string
+      use-artifact:
+        required: false
+        default: false
+        type: boolean
+      aws-region:
+        required: false
+        default: 'ap-southeast-3'
+        type: string
+      aws-secrets-manager:
+        required: false
+        default: ''
+        type: string
+      push:
+        required: false
+        default: true
+        type: boolean
+      trivy-json:
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      checkout-token:
+        required: false
+      docker-username:
+        required: true
+      docker-password:
+        required: true
+      aws-access-key-id:
+        required: false
+      aws-secret-access-key:
+        required: false
+jobs:
+  docker-build:
+    if: ${{ inputs.enable-docker }}
+    name: Docker Build  (${{ inputs.environment }})
+    runs-on: ${{ inputs.runner-name }}
+    steps:
+      - name: Checkout
+        if: inputs.checkout-repository == ''
+        uses: actions/checkout@v3
+      - name: Checkout ${{ inputs.checkout-repository }}
+        if: inputs.checkout-repository != ''
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.checkout-repository }}
+          ref: ${{ inputs.checkout-ref }}
+          path: ${{ inputs.checkout-path }}
+          token: ${{ secrets.checkout-token }}
+      - name: Docker
+        run: echo "Hello this is docker"
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v2
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
+      # - name: Login to GHES Registry
+      #   uses: docker/login-action@v2
+      #   with:
+      #     registry: ${{ inputs.docker-registry }}
+      #     username: ${{ secrets.docker-username }}
+      #     password: ${{ secrets.docker-password }}
+      # - name: Retrieve secrets from AWS Secrets Manager
+      #   if: inputs.aws-secrets-manager != ''
+      #   uses: say8425/aws-secrets-manager-actions@v2
+      #   with:
+      #     AWS_ACCESS_KEY_ID: ${{secrets.aws-access-key-id}}
+      #     AWS_SECRET_ACCESS_KEY: ${{secrets.aws-secret-access-key}}
+      #     AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
+      #     SECRET_NAME: ${{inputs.aws-secrets-manager}}
+      # - name: Build image
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: ${{ inputs.context }}
+      #     file: ${{ inputs.dockerfile }}
+      #     push: false
+      #     load: true
+      #     tags: ${{ inputs.docker-registry}}/${{ github.repository }}/${{ inputs.application }}:${{ inputs.tag-prefix }}-${{ inputs.environment }}-${{ inputs.postfix-image-info }}
+      # - name: Scan image
+      #   if: ${{ !inputs.trivy-json }}
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: ${{ inputs.docker-registry}}/${{ github.repository }}/${{ inputs.application }}:${{ inputs.tag-prefix }}-${{ inputs.environment }}-${{ inputs.postfix-image-info }}
+      #     format: 'table'
+      #     exit-code: '0'
+      #     ignore-unfixed: true
+      #     vuln-type: 'os,library'
+      #     severity: 'CRITICAL,HIGH'
+      #     security-checks: 'vuln,secret,config'
+      # - name: Scan image (JSON result)
+      #   if: ${{ inputs.trivy-json }}
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: ${{ inputs.docker-registry}}/${{ github.repository }}/${{ inputs.application }}:${{ inputs.tag-prefix }}-${{ inputs.environment }}-${{ inputs.postfix-image-info }}
+      #     format: 'json'
+      #     output: 'trivy_result.json'
+      #     exit-code: '0'
+      #     ignore-unfixed: true
+      #     vuln-type: 'os,library'
+      #     severity: 'CRITICAL,HIGH'
+      #     security-checks: 'vuln,secret,config'
+      # - name: CURL Trivy Result to N8N
+      #   if: ${{ inputs.trivy-json }}
+      #   run: |
+      #     curl -X POST -H "Content-Type: application/json" -d @trivy_result.json https://n8n.mantra-id.com/webhook/monitoring-devops/trivy
+      # - name: Push image
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: ${{ inputs.context }}
+      #     file: ${{ inputs.dockerfile }}
+      #     push: ${{ inputs.push }}
+      #     tags: ${{ inputs.docker-registry}}/${{ github.repository }}/${{ inputs.application }}:${{ inputs.tag-prefix }}-${{ inputs.environment }}-${{ inputs.postfix-image-info }}
+
